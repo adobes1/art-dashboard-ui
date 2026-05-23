@@ -33,24 +33,23 @@ function user_details_for_user_id(user_id) {
 function gaVersion() {
     const currentTime = new Date().getTime();  // Moved the definition up
 
-    if (typeof localStorage !== 'undefined') {
+    if (typeof window !== 'undefined' && window.localStorage) {
         const cachedGaVersion = localStorage.getItem('gaVersion');
         const cachedTimestamp = localStorage.getItem('gaVersionTimestamp');
-        
+
         const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
         // If cached version exists and it's not older than a day
         if (cachedGaVersion && cachedTimestamp && (currentTime - cachedTimestamp < oneDayInMilliseconds)) {
             return Promise.resolve({ payload: cachedGaVersion });
-        } 
+        }
     }
     
     // If localStorage is not available or cached data is stale
     const url = `${process.env.NEXT_PUBLIC_API_ENDPOINT}/ga-version`;
     return makeApiCall(url, 'GET', headers)
         .then(response => {
-            if (typeof localStorage !== 'undefined') {
-                // Save the new value and timestamp to local storage
+            if (typeof window !== 'undefined' && window.localStorage) {
                 localStorage.setItem('gaVersion', response.payload);
                 localStorage.setItem('gaVersionTimestamp', currentTime.toString());
             }
