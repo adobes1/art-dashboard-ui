@@ -1,0 +1,38 @@
+import React from "react";
+import { Badge } from "../ui/badge";
+
+type StatusVariant = "success" | "info" | "destructive" | "warning" | "default";
+
+const STATUS_MAP: Record<string, StatusVariant> = {
+  Approved: "success",
+  SHIPPED_LIVE: "success",
+  QE: "success",
+  CLOSED: "success",
+  VERIFIED: "success",
+  Requested: "info",
+  ON_QA: "info",
+  REL_PREP: "info",
+  Pending: "warning",
+  NEW_FILES: "warning",
+  MODIFIED: "warning",
+  "Not Requested": "default",
+};
+
+function getVariant(status: string): StatusVariant {
+  return STATUS_MAP[status] || "default";
+}
+
+interface StatusBadgeProps {
+  status: string;
+  count?: number;
+  className?: string;
+}
+
+export function StatusBadge({ status, count, className }: StatusBadgeProps) {
+  const label = count !== undefined ? `${status} ${count}` : status;
+  return (
+    <Badge variant={getVariant(status)} className={className}>
+      {label}
+    </Badge>
+  );
+}
