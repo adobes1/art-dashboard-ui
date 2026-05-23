@@ -67,3 +67,24 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-row-in {
+  animation: row-in 0.35s ease-out both;
+}
+
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-1 { animation-delay: 80ms; }
+.animation-delay-2 { animation-delay: 160ms; }
+.animation-delay-3 { animation-delay: 240ms; }
+.animation-delay-4 { animation-delay: 320ms; }
