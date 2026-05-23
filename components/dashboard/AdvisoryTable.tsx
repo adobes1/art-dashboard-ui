@@ -35,15 +35,74 @@ interface AdvisoryTableProps {
   loading?: boolean;
 }
 
+const SKELETON_ROWS = 5;
+
+const SKELETON_WIDTHS = [
+  ["w-16", "w-14", "w-20", "w-12", "w-24", "w-20", "w-24", "w-20", "w-24", "w-16"],
+  ["w-10", "w-14", "w-16", "w-14", "w-24", "w-24", "w-28", "w-24", "w-28", "w-20"],
+  ["w-14", "w-14", "w-14", "w-16", "w-24", "w-16", "w-20", "w-16", "w-20", "w-24"],
+  ["w-20", "w-14", "w-20", "w-10", "w-24", "w-20", "w-28", "w-20", "w-28", "w-12"],
+  ["w-16", "w-14", "w-12", "w-14", "w-24", "w-16", "w-24", "w-16", "w-24", "w-16"],
+];
+
 function TableSkeleton() {
   return (
-    <div className="space-y-2 p-4">
-      {[...Array(5)].map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
-      ))}
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow className="border-b border-border hover:bg-transparent">
+          <TableHead className="border-r border-border">Advisory</TableHead>
+          <TableHead colSpan={4} className="border-r border-border text-center">
+            Advisory Details
+          </TableHead>
+          <TableHead colSpan={2} className="border-r border-border text-center">
+            Doc
+          </TableHead>
+          <TableHead colSpan={2} className="border-r border-border text-center">
+            Product Security
+          </TableHead>
+          <TableHead className="text-center">Bugs</TableHead>
+        </TableRow>
+        <TableRow className="border-b border-border bg-card hover:bg-transparent dark:bg-zinc-950/50">
+          <TableHead className="border-r border-border">Type</TableHead>
+          <TableHead className="border-r border-border/50">Errata ID</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="border-r border-border">Release Date</TableHead>
+          <TableHead>Approval</TableHead>
+          <TableHead className="border-r border-border">Reviewer</TableHead>
+          <TableHead>Approval</TableHead>
+          <TableHead className="border-r border-border">Reviewer</TableHead>
+          <TableHead className="text-center">Summary</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[...Array(SKELETON_ROWS)].map((_, rowIdx) => (
+          <TableRow key={rowIdx} className="hover:bg-transparent">
+            {SKELETON_WIDTHS[rowIdx].map((w, colIdx) => (
+              <TableCell
+                key={colIdx}
+                className={
+                  colIdx === 0 ? "border-r border-border" :
+                  colIdx === 1 ? "border-r border-border/50" :
+                  colIdx === 4 || colIdx === 6 || colIdx === 8 ? "border-r border-border" :
+                  undefined
+                }
+              >
+                {colIdx === 3 || colIdx === 5 || colIdx === 7 ? (
+                  <Skeleton className={`h-6 ${w} rounded-full`} />
+                ) : (
+                  <Skeleton className={`h-4 ${w} rounded`} />
+                )}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
+
+const ROW_DELAYS = ["animation-delay-0", "animation-delay-1", "animation-delay-2", "animation-delay-3", "animation-delay-4"];
 
 export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
   if (loading) return <TableSkeleton />;
@@ -89,7 +148,10 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
         </TableHeader>
         <TableBody>
           {data.map((row, idx) => (
-            <TableRow key={idx}>
+            <TableRow
+              key={idx}
+              className={`animate-row-in ${ROW_DELAYS[idx] || ROW_DELAYS[ROW_DELAYS.length - 1]}`}
+            >
               {/* Advisory Type */}
               <TableCell className="border-r border-border font-medium">
                 <Tooltip>
