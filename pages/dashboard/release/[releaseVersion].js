@@ -1,131 +1,90 @@
-// File name defined as [releaseVersion].js to get the value from the parent component.
-import React, { useEffect, useState } from "react";
-import { Layout, Menu, message, Typography } from "antd";
-import OPENSHIFT_VERSION_SELECT from "../../../components/release/openshift_version_select";
-import RELEASE_BRANCH_DETAIL from "../../../components/release/release_branch_detail"
-import { useRouter } from 'next/router'
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
-import { RocketOutlined, ReloadOutlined } from "@ant-design/icons";
+import { DashboardLayout } from "../../../components/dashboard/DashboardLayout";
+import { TopBar } from "../../../components/dashboard/TopBar";
+import ReleaseBranchDetail from "../../../components/release/release_branch_detail";
 import { gaVersion } from "../../../components/api_calls/release_calls";
 
-const { Title } = Typography;
-
 function ReleaseHomePage() {
-    const router = useRouter()
-    const { releaseVersion } = router.query
+    const router = useRouter();
+    const { releaseVersion } = router.query;
     const [gaVersionValue, setGaVersion] = useState(null);
-
-    const { Footer, Sider } = Layout;
-
-    message.config({
-        maxCount: 2
-    })
-
-    const displayLoading = () => {
-        message.loading({
-            content: "Loading Data",
-            duration: 0,
-            style: { position: "fixed", left: "50%", top: "20%" }
-        }).then(r => {/* do nothing */
-        });
-    }
-
-    const destroyLoading = () => {
-
-        message.destroy()
-        message.success({
-            content: "Loaded",
-            duration: 2,
-            style: { position: "fixed", left: "50%", top: "20%", color: "#316DC1" }
-        }).then(r => {/* do nothing */
-        })
-
-    }
-
-    // Handler for release version change
-    const handleReleaseChange = (newReleaseVersion) => {
-        // Check if the selected version is different from the current version
-        if (newReleaseVersion !== releaseVersion) {
-            // Reset page to 1 and navigate to the new release version
-            router.push(`/dashboard/release/${newReleaseVersion}?page=1`, undefined, { shallow: true });
-        }
-    };
+    const [versionInfo, setVersionInfo] = useState({
+        current: undefined,
+        jiraKey: undefined,
+    });
+    const [versionList, setVersionList] = useState([]);
+    const versionSelectRef = useRef(null);
 
     useEffect(() => {
-        displayLoading();
         gaVersion()
-            .then(response => {
-                setGaVersion(response.payload);  // Adjusted this to use the correct property
+            .then((response) => {
+                setGaVersion(response.payload);
             })
-            .catch(error => {
-                console.error('Failed to fetch GA version:', error);
+            .catch((error) => {
+                console.error("Failed to fetch GA version:", error);
             });
     }, []);
 
-    const menuItems = [
-        {
-            key: "releaseStatusMenuItem",
-            icon: <RocketOutlined />,
-            label: <a href={"/dashboard"}><p style={{ fontSize: "medium" }}>Release status</p></a>
+    const handleReleaseChange = useCallback(
+        (newReleaseVersion) => {
+            if (newReleaseVersion !== releaseVersion) {
+                router.push(
+                    `/dashboard/release/${newReleaseVersion}?page=1`,
+                    undefined,
+                    { shallow: true }
+                );
+            }
         },
-        {
-            key: "buildHistory",
-            icon: <ReloadOutlined />,
-            label: <a href={`${process.env.NEXT_PUBLIC_BUILD_HISTORY_LINK}`} target={"_blank"}><p style={{ fontSize: "medium" }}>Build History</p></a>
-        },
-    ]
+        [releaseVersion, router]
+    );
+
+    const handleVersionInfo = useCallback((info) => {
+        setVersionInfo(info);
+    }, []);
+
+    const handleVersionList = useCallback((versions) => {
+        setVersionList(versions);
+    }, []);
+
+    const handleVersionSelectRef = useCallback((selectFn) => {
+        versionSelectRef.current = selectFn;
+    }, []);
+
+    const handleSidebarVersionSelect = useCallback((version) => {
+        if (versionSelectRef.current) {
+            versionSelectRef.current(version);
+        }
+    }, []);
 
     return (
-
-        <div>
+        <>
             <Head>
                 <title>ART Dashboard</title>
                 <link rel="icon" href="/redhat-logo.png" />
             </Head>
-            <Layout>
-                <Sider collapsed={false} width="220">
-                    <div style={{ paddingTop: "10px" }}>
-                        <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']} items={menuItems} />
-
-                    </div>
-                </Sider>
-
-                <Layout>
-
-                    <div align={"center"} style={{
-                        background: "white", height: "120px", float: "left"
-                    }}>
-                        <div className="center">
-                            <h1 style={{
-                                color: "#316DC1",
-                                margin: "20px",
-                                fontSize: "4.2rem",
-                                fontWeight: "normal"
-                            }}>OpenShift Release
-                                Portal</h1>
-                        </div>
-                    </div>
-                    <div className={"version-header"}>
-                        {
-                            releaseVersion === `openshift-${gaVersionValue}` ?
-                                <Title style={{ paddingLeft: 20 }} level={2}><code>{releaseVersion} (GA) </code></Title>
-                                :
-                                <Title style={{ paddingLeft: 20 }} level={2}><code>{releaseVersion}</code></Title>
-                        }
-                        <OPENSHIFT_VERSION_SELECT
-                            initialVersion={releaseVersion}
-                            redirectOnSelect
-                            onVersionChange={handleReleaseChange}
-                        />
-                    </div>
-                    <RELEASE_BRANCH_DETAIL branch={releaseVersion}
-                        destroyLoadingCallback={destroyLoading} />
-                    <Footer style={{ textAlign: 'center' }}>
-                        RedHat © 2023
-                    </Footer>
-                </Layout>
-            </Layout>
-        </div>
+            <DashboardLayout
+                gaVersion={gaVersionValue}
+                versionList={versionList}
+                currentVersion={versionInfo.current}
+                onVersionSelect={handleSidebarVersionSelect}
+            >
+                <TopBar
+                    releaseVersion={releaseVersion}
+                    currentVersion={versionInfo.current}
+                    gaVersion={gaVersionValue}
+                    jiraKey={versionInfo.jiraKey}
+                    onVersionChange={handleReleaseChange}
+                />
+                <ReleaseBranchDetail
+                    branch={releaseVersion}
+                    onVersionInfo={handleVersionInfo}
+                    onVersionList={handleVersionList}
+                    onVersionSelect={handleVersionSelectRef}
+                />
+            </DashboardLayout>
+        </>
     );
 }
 

@@ -1,0 +1,223 @@
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Rocket,
+  History,
+  ExternalLink,
+  PanelLeftClose,
+  PanelLeft,
+  Sun,
+  Moon,
+  Menu,
+  X,
+} from "lucide-react";
+import { useTheme } from "../theme/ThemeProvider";
+import { cn } from "../../lib/utils";
+
+const SIDEBAR_KEY = "art-dashboard-sidebar";
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  gaVersion?: string | null;
+  versionList?: string[];
+  currentVersion?: string;
+  onVersionSelect?: (version: string) => void;
+}
+
+export function DashboardLayout({
+  children,
+  gaVersion,
+  versionList,
+  currentVersion,
+  onVersionSelect,
+}: DashboardLayoutProps) {
+  const { theme, toggleTheme } = useTheme();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(SIDEBAR_KEY);
+    if (saved === "collapsed") setCollapsed(true);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? "collapsed" : "expanded");
+  }, [collapsed]);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) setCollapsed(true);
+    };
+    mql.addEventListener("change", handler);
+    if (mql.matches) setCollapsed(true);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const buildHistoryLink = process.env.NEXT_PUBLIC_BUILD_HISTORY_LINK || "#";
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "flex flex-col border-r border-border bg-card transition-all duration-200 ease-out",
+          collapsed ? "w-12" : "w-[260px]",
+          "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
+          mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"
+        )}
+      >
+        {/* Logo */}
+        <div className={cn(
+          "flex items-center border-b border-border",
+          collapsed ? "justify-center px-1 py-3" : "gap-2 px-3 py-3"
+        )}>
+          {!collapsed && (
+            <>
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-bold text-white">
+                A
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-base font-semibold">
+                  ART Dashboard
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  OpenShift Release
+                </div>
+              </div>
+            </>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden shrink-0 rounded p-1 text-muted-foreground transition-colors duration-100 hover:bg-muted hover:text-foreground md:flex"
+          >
+            {collapsed ? (
+              <PanelLeft className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" />
+            )}
+          </button>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="ml-auto shrink-0 text-muted-foreground md:hidden"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="px-2 py-2">
+          {!collapsed && (
+            <div className="px-2 pb-1 pt-2 text-xs uppercase tracking-wider text-muted-foreground">
+              Navigation
+            </div>
+          )}
+          <Link
+            href="/dashboard"
+            className={cn(
+              "flex items-center rounded-md py-2 text-sm transition-colors duration-100",
+              "bg-accent/10 text-accent",
+              collapsed ? "justify-center px-1" : "gap-2 px-2"
+            )}
+          >
+            <Rocket className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Release Status</span>}
+          </Link>
+          <a
+            href={buildHistoryLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center rounded-md py-2 text-sm text-muted-foreground transition-colors duration-100 hover:text-foreground",
+              collapsed ? "justify-center px-1" : "gap-2 px-2"
+            )}
+          >
+            <History className="h-5 w-5 shrink-0" />
+            {!collapsed && (
+              <>
+                <span>Build History</span>
+                <ExternalLink className="ml-auto h-3 w-3 opacity-50" />
+              </>
+            )}
+          </a>
+        </nav>
+
+        {/* Version list */}
+        {!collapsed && versionList && versionList.length > 0 && (
+          <div className="flex min-h-0 flex-1 flex-col border-t border-border">
+            <div className="px-4 pb-1 pt-3 text-xs uppercase tracking-wider text-muted-foreground">
+              Versions ({versionList.length})
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 pb-2">
+              {versionList.map((version) => (
+                <button
+                  key={version}
+                  onClick={() => onVersionSelect?.(version)}
+                  className={cn(
+                    "block w-full truncate rounded-md px-2 py-1.5 text-left font-mono text-xs transition-colors duration-100",
+                    version === currentVersion
+                      ? "bg-accent/10 font-medium text-accent"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {version}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="border-t border-border px-3 py-3">
+          {!collapsed && gaVersion && (
+            <div className="mb-3">
+              <div className="text-sm text-muted-foreground">Latest GA Version</div>
+              <div className="text-base">
+                v{gaVersion}
+              </div>
+            </div>
+          )}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 rounded-md px-1 py-1.5 text-base text-muted-foreground transition-colors duration-100 hover:text-foreground"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+            {!collapsed && (
+              <span className="text-xs">
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </span>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile hamburger */}
+        <div className="flex items-center border-b border-border px-3 py-2 md:hidden">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="text-muted-foreground"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="ml-2 text-sm font-semibold">ART Dashboard</span>
+        </div>
+        {children}
+      </main>
+    </div>
+  );
+}
