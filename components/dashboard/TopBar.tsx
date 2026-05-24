@@ -26,10 +26,12 @@ export function TopBar({
   onVersionChange,
 }: TopBarProps) {
   const [branches, setBranches] = useState<string[]>([]);
+  const [branchesLoaded, setBranchesLoaded] = useState(false);
 
   useEffect(() => {
     getReleaseBranchesFromOcpBuildData().then((data: any[]) => {
       setBranches(data.map((d: any) => d.name));
+      setBranchesLoaded(true);
     });
   }, []);
 
@@ -51,18 +53,28 @@ export function TopBar({
 
         <div className="flex items-center gap-2">
           {/* Version selector */}
-          <Select value={releaseVersion} onValueChange={onVersionChange}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="OpenShift Version" />
-            </SelectTrigger>
-            <SelectContent>
-              {branches.map((branch) => (
-                <SelectItem key={branch} value={branch}>
-                  {branch}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {branchesLoaded ? (
+            <Select value={releaseVersion} onValueChange={onVersionChange}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="OpenShift Version" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((branch) => (
+                  <SelectItem key={branch} value={branch}>
+                    {branch}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex h-9 w-[220px] items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm">
+              <span>{releaseVersion || "Loading…"}</span>
+              <svg className="ml-auto h-4 w-4 animate-spin text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          )}
 
           {/* Jira link */}
           {jiraKey && (
