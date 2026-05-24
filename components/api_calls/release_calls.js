@@ -25,6 +25,12 @@ function advisory_details_for_advisory_id(advisory_id) {
     return makeApiCall(url, 'GET', headers);
 }
 
+function batch_advisory_details(advisory_ids) {
+    const ids = advisory_ids.join(',');
+    const url = `${process.env.NEXT_PUBLIC_API_ENDPOINT}${process.env.NEXT_PUBLIC_BATCH_ADVISORY_DETAILS}${ids}`;
+    return makeApiCall(url, 'GET', headers);
+}
+
 function user_details_for_user_id(user_id) {
     const url = `${process.env.NEXT_PUBLIC_USER_DETAILS_FOR_A_USER_ID}${user_id}`;
     return makeApiCall(url, 'GET', headers);
@@ -62,6 +68,7 @@ module.exports = {
     remaining_git_requests,
     advisory_ids_for_branch,
     advisory_details_for_advisory_id,
+    batch_advisory_details,
     user_details_for_user_id,
     gaVersion
 };
