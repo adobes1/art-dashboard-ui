@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { advisory_details_for_advisory_id, advisory_ids_for_branch } from "../api_calls/release_calls";
+import { batch_advisory_details, advisory_ids_for_branch } from "../api_calls/release_calls";
 import { AdvisoryTable } from "../dashboard/AdvisoryTable";
 import { useRouter } from 'next/router';
 
@@ -19,27 +19,43 @@ function ReleaseBranchDetail(props) {
 
     const generateDataForEachAdvisory = useCallback(() => {
         setAdvisoryDetails([]);
-        const promises = overviewTableData.map((data) => {
-            return advisory_details_for_advisory_id(data.id).then(data_api => {
-                if (data_api["data"]) {
-                    return {
-                        advisory_details: data_api["data"]["advisory_details"],
-                        bug_details: data_api["data"]["bugs"],
-                        bug_summary: data_api["data"]["bug_summary"],
-                        type: data.type
-                    };
-                }
-                return null;
-            });
-        });
+        const advisoryIds = overviewTableData.map((data) => data.id);
 
-        Promise.all(promises)
-            .then((advisories_data) => {
-                advisories_data = advisories_data.filter(item => item !== null);
+        batch_advisory_details(advisoryIds)
+            .then((response) => {
+                const batchData = response["data"];
+                const advisories_data = overviewTableData.map((data) => {
+                    const entry = batchData?.[data.id];
+                    if (!entry || entry["status"] === "error") {
+                        return {
+                            type: data.type,
+                            error: entry?.["message"] || "Failed to load advisory data",
+                            errata_id: data.id,
+                        };
+                    }
+                    if (entry["data"]) {
+                        return {
+                            advisory_details: entry["data"]["advisory_details"],
+                            bug_details: entry["data"]["bugs"],
+                            bug_summary: entry["data"]["bug_summary"],
+                            type: data.type,
+                        };
+                    }
+                    return null;
+                }).filter(item => item !== null);
+
                 advisories_data.sort((a, b) => {
                     return FIXED_ORDER.indexOf(a.type) - FIXED_ORDER.indexOf(b.type);
                 });
                 setAdvisoryDetails(advisories_data);
+            })
+            .catch(() => {
+                const errorRows = overviewTableData.map((data) => ({
+                    type: data.type,
+                    error: "Network error — could not reach the server",
+                    errata_id: data.id,
+                }));
+                setAdvisoryDetails(errorRows);
             })
             .finally(() => {
                 setIsLoading(false);
@@ -131,6 +147,13 @@ function ReleaseBranchDetail(props) {
         if (!advisoryDetails || advisoryDetails.length === 0) return [];
 
         return advisoryDetails.map((data) => {
+            if (data.error) {
+                return {
+                    advisory_type: data.type,
+                    errata_id: data.errata_id,
+                    error: data.error,
+                };
+            }
             const details = data.advisory_details[0];
             return {
                 advisory_type: data.type,

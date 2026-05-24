@@ -19,15 +19,16 @@ import {
 interface AdvisoryRow {
   advisory_type: string;
   errata_id: number;
-  advisory_type_main: string;
-  status: string;
-  publish_date: string;
-  synopsis: string;
-  doc_complete: string;
-  doc_reviewer_realname: string;
-  security_approved: string;
-  product_security_reviewer_realname: string;
-  bug_summary: Array<{ bug_status: string; count: number }>;
+  advisory_type_main?: string;
+  status?: string;
+  publish_date?: string;
+  synopsis?: string;
+  doc_complete?: string;
+  doc_reviewer_realname?: string;
+  security_approved?: string;
+  product_security_reviewer_realname?: string;
+  bug_summary?: Array<{ bug_status: string; count: number }>;
+  error?: string;
 }
 
 interface AdvisoryTableProps {
@@ -147,85 +148,112 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((row, idx) => (
-            <TableRow
-              key={idx}
-              className={`animate-row-in ${ROW_DELAYS[idx] || ROW_DELAYS[ROW_DELAYS.length - 1]}`}
-            >
-              {/* Advisory Type */}
-              <TableCell className="border-r border-border font-medium">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">
-                      {row.advisory_type.charAt(0).toUpperCase() +
-                        row.advisory_type.slice(1)}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{row.synopsis}</TooltipContent>
-                </Tooltip>
-              </TableCell>
-
-              {/* Errata ID */}
-              <TableCell className="border-r border-border/50 font-mono">
-                <a
-                  href={`https://errata.devel.redhat.com/advisory/${row.errata_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent transition-colors duration-100 hover:text-accent/80"
+          {data.map((row, idx) => {
+            if (row.error) {
+              return (
+                <TableRow
+                  key={idx}
+                  className={`animate-row-in ${ROW_DELAYS[idx] || ROW_DELAYS[ROW_DELAYS.length - 1]}`}
                 >
-                  {row.errata_id}
-                </a>
-              </TableCell>
+                  <TableCell className="border-r border-border font-medium">
+                    {row.advisory_type.charAt(0).toUpperCase() +
+                      row.advisory_type.slice(1)}
+                  </TableCell>
+                  <TableCell className="border-r border-border/50 font-mono">
+                    {row.errata_id}
+                  </TableCell>
+                  <TableCell colSpan={8}>
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 flex-shrink-0">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                      </svg>
+                      Failed to load: {row.error}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            }
 
-              {/* Advisory Type Main */}
-              <TableCell className="text-muted-foreground">
-                {row.advisory_type_main?.toUpperCase()}
-              </TableCell>
+            return (
+              <TableRow
+                key={idx}
+                className={`animate-row-in ${ROW_DELAYS[idx] || ROW_DELAYS[ROW_DELAYS.length - 1]}`}
+              >
+                {/* Advisory Type */}
+                <TableCell className="border-r border-border font-medium">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-default">
+                        {row.advisory_type.charAt(0).toUpperCase() +
+                          row.advisory_type.slice(1)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{row.synopsis}</TooltipContent>
+                  </Tooltip>
+                </TableCell>
 
-              {/* Status */}
-              <TableCell>
-                <StatusBadge status={row.status} />
-              </TableCell>
+                {/* Errata ID */}
+                <TableCell className="border-r border-border/50 font-mono">
+                  <a
+                    href={`https://errata.devel.redhat.com/advisory/${row.errata_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent transition-colors duration-100 hover:text-accent/80"
+                  >
+                    {row.errata_id}
+                  </a>
+                </TableCell>
 
-              {/* Release Date */}
-              <TableCell className="border-r border-border text-muted-foreground">
-                {row.publish_date}
-              </TableCell>
+                {/* Advisory Type Main */}
+                <TableCell className="text-muted-foreground">
+                  {row.advisory_type_main?.toUpperCase()}
+                </TableCell>
 
-              {/* Doc Approval */}
-              <TableCell>
-                <StatusBadge status={row.doc_complete} />
-              </TableCell>
+                {/* Status */}
+                <TableCell>
+                  <StatusBadge status={row.status} />
+                </TableCell>
 
-              {/* Doc Reviewer */}
-              <TableCell className="border-r border-border text-base text-muted-foreground">
-                {row.doc_reviewer_realname || "Not Available"}
-              </TableCell>
+                {/* Release Date */}
+                <TableCell className="border-r border-border text-muted-foreground">
+                  {row.publish_date}
+                </TableCell>
 
-              {/* Security Approval */}
-              <TableCell>
-                <StatusBadge status={row.security_approved} />
-              </TableCell>
+                {/* Doc Approval */}
+                <TableCell>
+                  <StatusBadge status={row.doc_complete} />
+                </TableCell>
 
-              {/* Security Reviewer */}
-              <TableCell className="border-r border-border text-base text-muted-foreground">
-                {row.product_security_reviewer_realname || "Not Available"}
-              </TableCell>
+                {/* Doc Reviewer */}
+                <TableCell className="border-r border-border text-base text-muted-foreground">
+                  {row.doc_reviewer_realname || "Not Available"}
+                </TableCell>
 
-              {/* Bug Summary */}
-              <TableCell className="text-center">
-                <div className="flex flex-wrap justify-center gap-1">
-                  {row.bug_summary?.map((bug, i) => (
-                    <StatusBadge
-                      key={i}
-                      status={bug.bug_status}
-                      count={bug.count}
-                    />
-                  ))}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                {/* Security Approval */}
+                <TableCell>
+                  <StatusBadge status={row.security_approved} />
+                </TableCell>
+
+                {/* Security Reviewer */}
+                <TableCell className="border-r border-border text-base text-muted-foreground">
+                  {row.product_security_reviewer_realname || "Not Available"}
+                </TableCell>
+
+                {/* Bug Summary */}
+                <TableCell className="text-center">
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {row.bug_summary?.map((bug, i) => (
+                      <StatusBadge
+                        key={i}
+                        status={bug.bug_status}
+                        count={bug.count}
+                      />
+                    ))}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TooltipProvider>
