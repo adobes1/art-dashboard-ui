@@ -69,6 +69,9 @@ function ReleaseBranchDetail(props) {
         const currentVersionKey = versionKeys[page - 1];
         if (!currentVersionKey) return;
 
+        setAdvisoryDetails(undefined);
+        setShipmentStatusData(null);
+
         setCurrentJira(data[currentVersionKey][1]);
 
         const shipment = data[currentVersionKey][2] || null;
