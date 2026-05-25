@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { batch_advisory_details, advisory_ids_for_branch } from "../api_calls/release_calls";
+import { batch_advisory_details, advisory_ids_for_branch, shipment_status } from "../api_calls/release_calls";
 import { AdvisoryTable } from "../dashboard/AdvisoryTable";
 import { useRouter } from 'next/router';
 
@@ -9,6 +9,8 @@ function ReleaseBranchDetail(props) {
     const [advisoryDetails, setAdvisoryDetails] = useState(undefined);
     const [current, setCurrent] = useState(undefined);
     const [currentJira, setCurrentJira] = useState(undefined);
+    const [shipmentInfo, setShipmentInfo] = useState(null);
+    const [shipmentStatusData, setShipmentStatusData] = useState(null);
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState(null);
     const [isRouterReady, setIsRouterReady] = useState(false);
@@ -68,6 +70,9 @@ function ReleaseBranchDetail(props) {
         if (!currentVersionKey) return;
 
         setCurrentJira(data[currentVersionKey][1]);
+
+        const shipment = data[currentVersionKey][2] || null;
+        setShipmentInfo(shipment);
 
         const tableData = Object.entries(data[currentVersionKey][0]).map(([type, id]) => ({
             type: type,
@@ -143,33 +148,82 @@ function ReleaseBranchDetail(props) {
         }
     }, [current, overviewTableData]);
 
-    const tableData = React.useMemo(() => {
-        if (!advisoryDetails || advisoryDetails.length === 0) return [];
+    useEffect(() => {
+        if (shipmentInfo && shipmentInfo.url && current) {
+            const branch = props.branch;
+            shipment_status(shipmentInfo.url, branch, current)
+                .then(data => {
+                    setShipmentStatusData(data);
+                })
+                .catch(err => {
+                    console.error('Error fetching shipment status:', err);
+                    setShipmentStatusData(null);
+                });
+        } else {
+            setShipmentStatusData(null);
+        }
+    }, [shipmentInfo, current, props.branch]);
 
-        return advisoryDetails.map((data) => {
-            if (data.error) {
-                return {
-                    advisory_type: data.type,
-                    errata_id: data.errata_id,
-                    error: data.error,
-                };
+    const tableData = React.useMemo(() => {
+        const rows = [];
+
+        if (shipmentInfo && shipmentInfo.advisories) {
+            const status = shipmentStatusData?.status || "Pending";
+            const approvals = shipmentStatusData?.approvals || {};
+            const docsApproval = approvals["Docs"] || {};
+            const advisoryFileData = shipmentStatusData?.advisories || {};
+
+            for (const adv of shipmentInfo.advisories) {
+                const fileData = advisoryFileData[adv.kind] || {};
+                rows.push({
+                    advisory_type: adv.kind,
+                    errata_id: fileData.live_id || adv.live_id,
+                    advisory_type_main: fileData.type || "",
+                    status: status,
+                    publish_date: shipmentInfo.release_date || "",
+                    synopsis: fileData.synopsis || "",
+                    doc_complete: docsApproval.approved ? "Approved" : "Not Approved",
+                    doc_reviewer_realname: docsApproval.approved_by || "Not Available",
+                    bug_summary: [],
+                    is_shipment: true,
+                    shipment_status: status,
+                    shipment_url: shipmentInfo.url,
+                    stage_advisory_url: fileData.stage_url || null,
+                    prod_advisory_url: fileData.prod_url || null,
+                    release_date: shipmentInfo.release_date || "",
+                    doc_approved: docsApproval.approved || false,
+                    doc_reviewer: docsApproval.approved_by || "Not Available",
+                });
             }
-            const details = data.advisory_details[0];
-            return {
-                advisory_type: data.type,
-                errata_id: details.id,
-                advisory_type_main: details.advisory_type,
-                status: details.status,
-                publish_date: details.publish_date,
-                synopsis: details.synopsis,
-                doc_complete: details.doc_complete,
-                doc_reviewer_realname: details.doc_reviewer_details?.realname || "Not Available",
-                security_approved: details.security_approved,
-                product_security_reviewer_realname: details.product_security_reviewer_details?.realname || "Not Available",
-                bug_summary: data.bug_summary,
-            };
-        });
-    }, [advisoryDetails]);
+        }
+
+        if (advisoryDetails && advisoryDetails.length > 0) {
+            for (const data of advisoryDetails) {
+                if (data.error) {
+                    rows.push({
+                        advisory_type: data.type,
+                        errata_id: data.errata_id,
+                        error: data.error,
+                    });
+                    continue;
+                }
+                const details = data.advisory_details[0];
+                rows.push({
+                    advisory_type: data.type,
+                    errata_id: details.id,
+                    advisory_type_main: details.advisory_type,
+                    status: details.status,
+                    publish_date: details.publish_date,
+                    synopsis: details.synopsis,
+                    doc_complete: details.doc_complete,
+                    doc_reviewer_realname: details.doc_reviewer_details?.realname || "Not Available",
+                    bug_summary: data.bug_summary,
+                });
+            }
+        }
+
+        return rows;
+    }, [advisoryDetails, shipmentInfo, shipmentStatusData]);
 
     useEffect(() => {
         if (props.onVersionInfo && current) {

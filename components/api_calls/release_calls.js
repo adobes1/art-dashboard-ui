@@ -36,6 +36,11 @@ function user_details_for_user_id(user_id) {
     return makeApiCall(url, 'GET', headers);
 }
 
+function shipment_status(mr_url, branch, assembly) {
+    const url = `${process.env.NEXT_PUBLIC_API_ENDPOINT}${process.env.NEXT_PUBLIC_SHIPMENT_STATUS_ENDPOINT}?url=${encodeURIComponent(mr_url)}&branch=${branch}&assembly=${assembly}`;
+    return makeApiCall(url, 'GET', headers);
+}
+
 function gaVersion() {
     const currentTime = new Date().getTime();  // Moved the definition up
 
@@ -70,5 +75,6 @@ module.exports = {
     advisory_details_for_advisory_id,
     batch_advisory_details,
     user_details_for_user_id,
+    shipment_status,
     gaVersion
 };
