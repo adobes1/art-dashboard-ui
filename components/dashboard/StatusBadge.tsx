@@ -12,10 +12,12 @@ const STATUS_MAP: Record<string, StatusVariant> = {
   Requested: "info",
   ON_QA: "info",
   REL_PREP: "info",
-  Pending: "warning",
+  Staged: "warning",
+  Pending: "default",
   NEW_FILES: "warning",
   MODIFIED: "warning",
   "Not Requested": "default",
+  "Not Approved": "default",
 };
 
 function getVariant(status: string): StatusVariant {
