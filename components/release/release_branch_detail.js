@@ -16,8 +16,16 @@ function ReleaseBranchDetail(props) {
     const [isRouterReady, setIsRouterReady] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [loadedBranch, setLoadedBranch] = useState(null);
+    const [errataLoaded, setErrataLoaded] = useState(false);
+    const [shipmentLoaded, setShipmentLoaded] = useState(false);
 
     const FIXED_ORDER = ["Extras", "Image", "Metadata", "Microshift", "Rpm"];
+
+    useEffect(() => {
+        if (errataLoaded && shipmentLoaded) {
+            setIsLoading(false);
+        }
+    }, [errataLoaded, shipmentLoaded]);
 
     const generateDataForEachAdvisory = useCallback(() => {
         setAdvisoryDetails([]);
@@ -60,7 +68,7 @@ function ReleaseBranchDetail(props) {
                 setAdvisoryDetails(errorRows);
             })
             .finally(() => {
-                setIsLoading(false);
+                setErrataLoaded(true);
             });
     }, [overviewTableData]);
 
@@ -69,6 +77,9 @@ function ReleaseBranchDetail(props) {
         const currentVersionKey = versionKeys[page - 1];
         if (!currentVersionKey) return;
 
+        setIsLoading(true);
+        setErrataLoaded(false);
+        setShipmentLoaded(false);
         setAdvisoryDetails(undefined);
         setShipmentStatusData(null);
 
@@ -76,6 +87,10 @@ function ReleaseBranchDetail(props) {
 
         const shipment = data[currentVersionKey][2] || null;
         setShipmentInfo(shipment);
+
+        if (!shipment || !shipment.url) {
+            setShipmentLoaded(true);
+        }
 
         const tableData = Object.entries(data[currentVersionKey][0]).map(([type, id]) => ({
             type: type,
@@ -114,6 +129,10 @@ function ReleaseBranchDetail(props) {
         const pageIndex = versionKeys.indexOf(versionKey);
         if (pageIndex === -1) return;
 
+        setIsLoading(true);
+        setAdvisoryDetails(undefined);
+        setShipmentStatusData(null);
+
         const newPage = pageIndex + 1;
         router.replace({
             pathname: router.pathname,
@@ -137,7 +156,6 @@ function ReleaseBranchDetail(props) {
     useEffect(() => {
         if (props.branch && currentPage !== null && isRouterReady) {
             if (branchData && loadedBranch === props.branch) {
-                setIsLoading(true);
                 loadVersionData(branchData, currentPage);
             } else {
                 getBranchData(props.branch, currentPage);
@@ -161,9 +179,13 @@ function ReleaseBranchDetail(props) {
                 .catch(err => {
                     console.error('Error fetching shipment status:', err);
                     setShipmentStatusData(null);
+                })
+                .finally(() => {
+                    setShipmentLoaded(true);
                 });
         } else {
             setShipmentStatusData(null);
+            setShipmentLoaded(true);
         }
     }, [shipmentInfo, current, props.branch]);
 
