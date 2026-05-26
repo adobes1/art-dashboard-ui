@@ -45,17 +45,6 @@ export function NewContentChecklist() {
       </Tooltip>
     </Box>
     <Box>
-      <FormControlLabel control={<Checkbox {...register("check_prodsec_review", {required: true})} />}
-                        label="You have performed a threat model assessment"/>
-      <Tooltip title={`ProdSec no longer performs an assessment, instead requiring a self-assessment from this link`}>
-        <IconButton color="primary" aria-label="help"
-                    href="https://spaces.redhat.com/spaces/PRODSEC/pages/388107958/Request+an+SD+Elements+Threat+Model+for+new+OCP+components"
-                    target="_blank">
-          <HelpIcon/>
-        </IconButton>
-      </Tooltip>
-    </Box>
-    <Box>
       <FormControlLabel control={<Checkbox {...register("check_alignment", {required: true})} />}
                         label="My image/rpm has aligned with Product Management / Docs / QE / Product Support"/>
       <Tooltip title={`While not a technical requirement for building a new component, please ensure that there is a shared understanding
