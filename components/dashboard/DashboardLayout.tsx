@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   Rocket,
   History,
+  AlertTriangle,
   ExternalLink,
   PanelLeftClose,
   PanelLeft,
@@ -55,6 +56,7 @@ export function DashboardLayout({
   }, []);
 
   const buildHistoryLink = process.env.NEXT_PUBLIC_BUILD_HISTORY_LINK || "#";
+  const buildFailuresLink = process.env.NEXT_PUBLIC_BUILD_FAILURES_LINK || "#";
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -144,6 +146,23 @@ export function DashboardLayout({
             {!collapsed && (
               <>
                 <span>Build History</span>
+                <ExternalLink className="ml-auto h-3 w-3 opacity-50" />
+              </>
+            )}
+          </a>
+          <a
+            href={buildFailuresLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center rounded-md py-2 text-sm text-muted-foreground transition-colors duration-100 hover:text-foreground",
+              collapsed ? "justify-center px-1" : "gap-2 px-2"
+            )}
+          >
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            {!collapsed && (
+              <>
+                <span>Build Failures</span>
                 <ExternalLink className="ml-auto h-3 w-3 opacity-50" />
               </>
             )}
