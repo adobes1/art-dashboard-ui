@@ -35,6 +35,7 @@ interface AdvisoryRow {
   release_date?: string;
   doc_approved?: boolean;
   doc_reviewer?: string;
+  mr_diff_url?: string;
 }
 
 interface AdvisoryTableProps {
@@ -45,11 +46,11 @@ interface AdvisoryTableProps {
 const SKELETON_ROWS = 5;
 
 const SKELETON_WIDTHS = [
-  ["w-16", "w-14", "w-20", "w-12", "w-24", "w-20", "w-24", "w-16"],
-  ["w-10", "w-14", "w-16", "w-14", "w-24", "w-24", "w-28", "w-20"],
-  ["w-14", "w-14", "w-14", "w-16", "w-24", "w-16", "w-20", "w-24"],
-  ["w-20", "w-14", "w-20", "w-10", "w-24", "w-20", "w-28", "w-12"],
-  ["w-16", "w-14", "w-12", "w-14", "w-24", "w-16", "w-24", "w-16"],
+  ["w-16", "w-14", "w-8", "w-20", "w-12", "w-24", "w-20", "w-24", "w-16"],
+  ["w-10", "w-14", "w-8", "w-16", "w-14", "w-24", "w-24", "w-28", "w-20"],
+  ["w-14", "w-14", "w-8", "w-14", "w-16", "w-24", "w-16", "w-20", "w-24"],
+  ["w-20", "w-14", "w-8", "w-20", "w-10", "w-24", "w-20", "w-28", "w-12"],
+  ["w-16", "w-14", "w-8", "w-12", "w-14", "w-24", "w-16", "w-24", "w-16"],
 ];
 
 function TableSkeleton() {
@@ -58,7 +59,7 @@ function TableSkeleton() {
       <TableHeader>
         <TableRow className="border-b border-border hover:bg-transparent">
           <TableHead className="border-r border-border">Advisory</TableHead>
-          <TableHead colSpan={4} className="border-r border-border text-center">
+          <TableHead colSpan={5} className="border-r border-border text-center">
             Advisory Details
           </TableHead>
           <TableHead colSpan={2} className="border-r border-border text-center">
@@ -69,6 +70,7 @@ function TableSkeleton() {
         <TableRow className="border-b border-border bg-card hover:bg-transparent dark:bg-zinc-950/50">
           <TableHead className="border-r border-border">Type</TableHead>
           <TableHead className="border-r border-border/50">Advisory ID</TableHead>
+          <TableHead className="border-r border-border/50">MR</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="border-r border-border">Release Date</TableHead>
@@ -85,12 +87,12 @@ function TableSkeleton() {
                 key={colIdx}
                 className={
                   colIdx === 0 ? "border-r border-border" :
-                  colIdx === 1 ? "border-r border-border/50" :
-                  colIdx === 4 || colIdx === 6 ? "border-r border-border" :
+                  colIdx === 1 || colIdx === 2 ? "border-r border-border/50" :
+                  colIdx === 5 || colIdx === 7 ? "border-r border-border" :
                   undefined
                 }
               >
-                {colIdx === 3 || colIdx === 5 ? (
+                {colIdx === 4 || colIdx === 6 ? (
                   <Skeleton className={`h-6 ${w} rounded-full`} />
                 ) : (
                   <Skeleton className={`h-4 ${w} rounded`} />
@@ -167,7 +169,7 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
         <TableHeader>
           <TableRow className="border-b border-border hover:bg-transparent">
             <TableHead className="border-r border-border">Advisory</TableHead>
-            <TableHead colSpan={4} className="border-r border-border text-center">
+            <TableHead colSpan={5} className="border-r border-border text-center">
               Advisory Details
             </TableHead>
             <TableHead colSpan={2} className="border-r border-border text-center">
@@ -178,6 +180,7 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
           <TableRow className="border-b border-border bg-card hover:bg-transparent dark:bg-zinc-950/50">
             <TableHead className="border-r border-border">Type</TableHead>
             <TableHead className="border-r border-border/50">Advisory ID</TableHead>
+            <TableHead className="border-r border-border/50">MR</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="border-r border-border">Release Date</TableHead>
@@ -201,7 +204,7 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
                   <TableCell className="border-r border-border/50 font-mono">
                     {row.errata_id}
                   </TableCell>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <div className="flex items-center gap-2 text-sm text-destructive">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 flex-shrink-0">
                         <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
@@ -232,6 +235,24 @@ export function AdvisoryTable({ data, loading }: AdvisoryTableProps) {
 
                 <TableCell className="border-r border-border/50 font-mono">
                   {renderAdvisoryId(row)}
+                </TableCell>
+
+                <TableCell className="border-r border-border/50 text-center">
+                  {row.mr_diff_url ? (
+                    <a
+                      href={row.mr_diff_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-accent transition-colors duration-100 hover:text-accent/80"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                        <path d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" />
+                        <path d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">--</span>
+                  )}
                 </TableCell>
 
                 <TableCell className="text-muted-foreground">
