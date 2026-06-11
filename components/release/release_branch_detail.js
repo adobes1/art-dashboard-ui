@@ -215,6 +215,7 @@ function ReleaseBranchDetail(props) {
                     shipment_url: shipmentInfo.url,
                     stage_advisory_url: fileData.stage_url || null,
                     prod_advisory_url: fileData.prod_url || null,
+                    mr_diff_url: fileData.diff_url || null,
                     release_date: shipmentInfo.release_date || "",
                     doc_approved: docsApproval.approved || false,
                     doc_reviewer: docsApproval.approved_by || "Not Available",
